@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # export:
+  #   build: .
+  #   image: repotcc/export
+  #   container_name: export
+  #   environment:
+  #     KUBECOST_HOST: 'cost-analyzer-cost-analyzer.kubecost:9090'
+  #     AGGREGATION: 'namespace'
+  #     PREVIOUS_MONTH: 'True'
+  #     POSTGRES_DB: 'kubecost'
+  #     POSTGRES_USER: user'
+  #     POSTGRES_PASSWORD: support:*'
+  #     POSTGRES_HOST: localhost'
+  #     POSTGRES_PORT: 5432'
+
+  db:
+    image: postgres:14
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: Z624hLVdg10U
+      POSTGRES_DB: kubecost
+    ports:
+      - "5432:5432"
+    networks:
+      - my_network
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    ports:
+      - "8081:8080"  # Porta do Adminer
+    networks:
+      - my_network
+networks:
+  my_network:

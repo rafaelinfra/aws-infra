@@ -1,13 +1,14 @@
 #######################
 ## Dependências 
 #######################
-
+from hashlib import pbkdf2_hmac, sha256, md5
 from base64 import standard_b64encode
-from hashlib import pbkdf2_hmac, sha256
-from os import urandom
 from random import choice
-import hmac
+from os import urandom
+import hashlib
 import string
+import hmac
+
 
 
 salt_size = 16
@@ -46,6 +47,14 @@ def pg_scram_sha256(passwd: str) -> str:
         f'${b64enc(stored_key)}:{b64enc(server_key)}'
     )
 
+
+def pg_md5_hash(user: str, passwd: str) -> str:
+
+    user_pass = passwd+user
+
+    hash = hashlib.md5(user_pass.encode('utf-8')).hexdigest()
+
+    return f"md5{hash}"
 
 #######################
 ## Def Principal

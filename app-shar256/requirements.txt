@@ -1,0 +1,7 @@
+uvicorn==0.32.1
+fastapi==0.115.5
+boto3==1.35.70
+python-dotenv==1.0.1
+msal==1.31.1
+routes==2.5.1
+pandas==2.2.3

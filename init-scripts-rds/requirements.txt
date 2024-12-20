@@ -1,0 +1,11 @@
+python-gitlab
+boto3==1.35.65
+python-dateutil==2.8.2
+psycopg2-binary
+# psycopg2
+# jmespath==1.0.1
+# s3transfer==0.6.2
+# sendmail==2.0
+# six==1.16.0
+urllib3==1.26.16
+cfnresponse

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shar256</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 400px; /* Limite para o bloco principal */
+        }
+
+        .form-container {
+            background-color: #2c27a7;
+            padding: 20px;
+            color: rgb(241, 232, 232);
+            border-radius: 6px;
+            box-shadow: 0 4px 8px rgba(73, 67, 67, 0.816);
+            width: 100%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        label, input, select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 4px;
+            border: 1px solid #2c27a7;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #d1d802;
+            color: rgb(7, 7, 7);
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #c2c900;
+        }
+
+        #response {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #response p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        #response pre {
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            text-align: left;
+            margin: 0;
+            padding: 10px;
+            background-color: #2c27a7;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        #consultButton {
+            position: absolute;
+            top: -30px;
+            background-color: #d1d802;
+            color: rgb(0, 0, 0);
+            padding: 5px 15px;
+            width: 40%;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #consultButton:hover {
+            background-color: #c2c900;
+        }
+
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-height: 80%;
+            z-index: 1000;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        #popup h2 {
+            margin: 0 0 10px;
+            text-align: center;
+        }
+
+        #popup table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        #popup th, #popup td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #popup th {
+            background-color: #f4f4f4;
+        }
+
+        #popup button {
+            background-color: #d9534f;
+            color: white;
+            margin-top: 20px;
+        }
+
+        #popup button:hover {
+            background-color: #c9302c;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Botão de Consulta -->
+        <button id="consultButton">Consulta de Bancos</button>
+
+        <!-- Formulário principal -->
+        <div class="form-container">
+            <h2>Gerador de Hash</h2>
+            <form id="userForm">
+                <label for="email">E-mail:</label>
+                <input type="email" id="email" name="email" required><br><br>
+    
+                <label for="dbname">Nome do Banco:</label>
+                <select id="dbname" name="dbname" required>
+                    <!-- As opções serão preenchidas dinamicamente -->
+                </select><br><br>
+                
+                <label for="name">Usuário do banco:</label>
+                <input type="text" id="name" name="name" required><br><br>
+    
+                <label for="host">HostName:</label>
+                <input type="text" id="host" name="host" required readonly><br><br>
+
+                <label for="version">Versão:</label>
+                <input type="text" id="version" name="version" readonly><br><br>
+                
+                <button type="submit">Cadastrar</button>
+            </form>
+    
+            <div id="response" style="margin-top: 20px;"></div>
+        </div>
+    
+        <script>
+            let databasesData = []; // Variável global para armazenar os dados dos bancos de dados
+
+            // Função para carregar o dropdown com os nomes de banco
+            async function loadDatabases() {
+                try {
+                    const response = await fetch('/consult-rds');
+                    if (!response.ok) throw new Error('Erro ao consultar bancos');
+                    const data = await response.json();
+
+                    databasesData = data; // Salvar os dados retornados em uma variável global
+
+                    const dbnameSelect = document.getElementById('dbname');
+                    dbnameSelect.innerHTML = '';  // Limpa as opções existentes
+
+                    // Adiciona uma opção padrão
+                    const defaultOption = document.createElement('option');
+                    defaultOption.textContent = 'Selecione o Banco';
+                    defaultOption.value = '';
+                    dbnameSelect.appendChild(defaultOption);
+
+                    // Preenche o dropdown com os nomes dos bancos
+                    data.forEach(row => {
+                        const option = document.createElement('option');
+                        option.value = row.resourceName;  // valor do select
+                        option.textContent = row.resourceName;  // texto visível no select
+                        dbnameSelect.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Erro ao carregar os bancos:', error);
+                }
+            }
+
+            // Função para preencher o campo "Endpoint" com o valor de "DNS" ao selecionar o nome do banco
+            function updateEndpoint() {
+                const selectedDb = document.getElementById('dbname').value;
+                const db = databasesData.find(database => database.resourceName === selectedDb);
+                
+                if (db) {
+                    document.getElementById('host').value = db.DNS;  // Preenche o campo "host" com o DNS
+                    document.getElementById('version').value = db.version;  // Preenche o campo "version"
+                    // Torna os campos "Endpoint" e "Versão" não editáveis
+                    document.getElementById('host').readOnly = true;
+                    document.getElementById('version').readOnly = true;
+                } else {
+                    document.getElementById('host').value = '';  // Limpa o campo se não encontrar o banco
+                    document.getElementById('version').value = '';  // Limpa o campo versão
+                }
+            }
+
+            // Carregar os dados quando o documento for carregado
+            document.addEventListener('DOMContentLoaded', loadDatabases);
+
+            // Adiciona o evento para atualizar o endpoint ao selecionar o nome do banco
+            document.getElementById('dbname').addEventListener('change', updateEndpoint);
+
+            document.getElementById('userForm').addEventListener('submit', async function(event) {
+                event.preventDefault();
+    
+                const email = document.getElementById('email').value;
+                const name = document.getElementById('name').value;
+                const dbname = document.getElementById('dbname').value;
+                const host = document.getElementById('host').value;
+                const version = document.getElementById('version').value;
+    
+                const user = { email, name, dbname, host, version };
+    
+                try {
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(user)
+                    });
+    
+                    const data = await response.json();
+    
+                    // Exibindo a mensagem e o password_hash
+                    const message = data.message;
+                    const passwordHash = data.user.password_hash;
+    
+                    // Atualizando o painel com a mensagem e o password_hash
+                    document.getElementById('response').innerHTML = ` 
+                        <p>${message}</p>
+                        <pre><strong>Password Hash:</strong><br>${passwordHash}</pre>
+                    `;
+                } catch (error) {
+                    console.error('Erro na requisição:', error);
+                    document.getElementById('response').innerText = 'Ocorreu um erro ao tentar cadastrar o usuário.';
+                }
+            });
+        </script>    
+
+    <!-- Pop-up para exibir dados -->
+    <div id="overlay"></div>
+    <div id="popup">
+        <h2>Consulta de Bancos de Dados</h2>
+        <table id="dataTable"></table>
+        <button onclick="closePopup()">Retornar</button>
+    </div>
+
+    <script>
+        // Consulta de Bancos de Dados
+        document.getElementById('consultButton').addEventListener('click', async () => {
+            try {
+                const response = await fetch('/consult-rds');
+                if (!response.ok) throw new Error('Erro na resposta do servidor');
+                
+                const data = await response.json();
+                const table = document.getElementById('dataTable');
+                table.innerHTML = '';
+
+                const headers = ['Account ID', 'Resource Name', 'Version' , 'AWS Region', 'Database Name', 'Endpoint', 'Port', 'DNS'];
+                const headerRow = document.createElement('tr');
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.accountId || ''}</td>
+                        <td>${row.resourceName || ''}</td>
+                        <td>${row.version || ''}</td>
+                        <td>${row.awsRegion || ''}</td>
+                        <td>${row.databaseName || ''}</td>
+                        <td>${row.endpoint || ''}</td>
+                        <td>${row.port || ''}</td>
+                        <td>${row.DNS || ''}</td>
+                    `;
+                    table.appendChild(tr);
+                });
+
+                document.getElementById('popup').style.display = 'block';
+                document.getElementById('overlay').style.display = 'block';
+            } catch (error) {
+                console.error('Erro ao consultar dados:', error);
+                alert('Erro ao consultar os dados. Verifique o console para mais detalhes.');
+            }
+        });
+
+        // Fechar pop-up
+        function closePopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
