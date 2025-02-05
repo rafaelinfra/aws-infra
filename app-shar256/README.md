@@ -1,7 +1,6 @@
 
 
 ### FUNCIONAMENTO DA APLICAÇÃO:
-#### Status Deploy: [![Codefresh build status]( https://g.codefresh.io/api/badges/pipeline/ipp-engenharia-cloud/Ferramentas%2Fapp-shar256-rds?type=cf-1)]( https://g.codefresh.io/public/accounts/ipp-engenharia-cloud/pipelines/new/6749aa3ca6b3a92cba3cdb24)
 
 
     Estrutura da Aplicação
